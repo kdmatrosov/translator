@@ -6,6 +6,7 @@
 </head>
 <link rel="stylesheet" href="./style.css">
 <script src="https://unpkg.com/vue/dist/vue.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.11.4/math.min.js"></script>
 <body>
 <div id="app">
     {{header}}
@@ -16,7 +17,15 @@
       data: {
         header: 'Транслятор',
         projects: []
+      },
+      created(){
+        let h = math.parse('x^2 + x');
+        let x = math.parse('x');
+        let dh = math.derivative(h, x);
+        console.log(dh.toString());
+        console.log(dh.eval({x: 3}));
       }
+
     });
 </script>
 </body>
