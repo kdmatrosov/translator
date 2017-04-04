@@ -1,4 +1,49 @@
+html {
+    height: 100%;
+    width: 100%;
+}
 
 body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
     padding: 0;
+
+}
+
+#app {
+
+    height: 100%;
+    width: 100%;
+}
+
+.container {
+    display: grid;
+    height: 100%;
+    width: 100%;
+    grid-template-columns: 50% 50%;
+    grid-template-rows: 50% 50%;
+}
+
+.container__text {
+    padding: 10px;
+}
+
+.container__bnf {
+    padding: 10px;
+}
+
+.container__chart {
+
+}
+
+.container__error {
+}
+
+.text {
+    resize: none;
+    width: 100%;
+    height: 100%;
+    border: 1px solid #d1d1d1;
+    outline: none;
 }

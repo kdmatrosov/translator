@@ -9,7 +9,14 @@
 <script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.11.4/math.min.js"></script>
 <body>
 <div id="app">
-    {{header}}
+    <div class="container">
+        <div class="container__text">
+            <textarea class="text"></textarea>
+        </div>
+        <div class="container__bnf"></div>
+        <div class="container__chart"></div>
+        <div class="container__error"></div>
+    </div>
 </div>
 <script>
     new Vue({
