@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="./style.css">
 <script src="https://unpkg.com/vue/dist/vue.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/mathjs/3.11.4/math.min.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
 <body>
 <div id="app">
     <div class="container">
@@ -18,22 +19,116 @@
         <div class="container__error"></div>
     </div>
 </div>
+<div id="chart"></div>
 <script>
-    new Vue({
-      el: '#app',
-      data: {
-        header: 'Транслятор',
-        projects: []
+  new Vue({
+    el: '#app',
+    data: {
+      header: 'Транслятор',
+      projects: [],
+      h: 0.01,
+      interval: 2
+    },
+    created(){/*
+     let h = math.parse('x^2 + x');
+     let x = math.parse('x');
+     let dh = math.derivative(h, x);
+     console.log(dh.toString());
+     console.log(dh.eval({x: 3}));*/
+      this.main();
+    },
+    methods: {
+      func(x, y){
+        return x + y;
       },
-      created(){
-        let h = math.parse('x^2 + x');
-        let x = math.parse('x');
-        let dh = math.derivative(h, x);
-        console.log(dh.toString());
-        console.log(dh.eval({x: 3}));
-      }
+      main(){
+        //3y”+2y’+y=0
+        let x = [0];
+        let y = [1];
+        const a = 3, b = 2 / a, c = 1 / a;
+        this.eiler(x, y, b, c)
+      },
+      eiler(x = [0], y = [0], b, c){
+        let h = 0.01 || this.h, interval = this.interval;
+        const tn = 1, t0 = 0;
+        //Расчет числа шагов
+        const n = (tn - t0) / h;
+        let data = [];
+        for (let i = 1; i < n; i++) {
+          x[i] = x[i - 1] + (-b * x[i - 1] - c * y[i - 1]) * h
+          y[i] = y[i - 1] + x[i - 1] * h;
+          console.log([+x[i].toFixed(8), +y[i].toFixed(8)]);
+          data.push([+x[i].toFixed(8), +y[i].toFixed(8)]);
+        }
+        this.buildChart(data);
+      },
+      buildChart(data)
+      {
+        Highcharts.chart('chart', {
+          title: {
+            text: 'График'
+          },
+          credits: {
+            enabled: false
+          },
+          xAxis: {
+            legend: {
+              enabled: false
+            }
+          },
+          legend: {
+            enabled: false
+          },
+          plotOptions: {
+            series: {
+              lineWidth: 1,
+              states: {
+                lineWidth: 1,
+                hover: {
+                  lineWidth: 1
+                }
+              },
+              marker: {
+                radius: 1,
+                symbol: 'circle',
+                states: {
+                  hover: {
+                    radius: 3
+                  }
+                }
+              },
+              color: '#7f76e9'
+            }
 
-    });
+          }, tooltip: {
+            formatter: function () {
+              return '<b>' + this.x +
+                '</b> , <b>' + this.y + '</b>';
+            }
+          },
+          series: [{
+            data: data.sort((a, b) => a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0))
+          }]
+        });
+      },
+      runge(){
+        let k1, k2, k3, k4;
+        let i;
+        let x = [1];
+        let y = [1];
+        let n = 5;
+        const h = 0.01;
+        k1 = func(x[i], y[i]);
+        k2 = func(x[i] + h / 2, y[i] + (h * k1) / 2);
+        k3 = func(x[i] + h / 2, y[i] + (h * k2) / 2);
+        k4 = func(x[i] + h, y[i] + h * k3);
+        for (i = 1; i < n; ++i) {
+          y[i + 1] = y[0] + (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
+        }
+      }
+    }
+
+  });
 </script>
 </body>
 </html>

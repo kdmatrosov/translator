@@ -47,3 +47,10 @@ body {
     border: 1px solid #d1d1d1;
     outline: none;
 }
+#chart{
+    position: fixed;
+    left: 0;
+    top: 50%;
+    right: 50%;
+    bottom: 0;
+}
