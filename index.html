@@ -12,7 +12,7 @@
 <div id="app">
     <div class="container">
         <div class="container__text">
-            <textarea class="text"></textarea>
+            <textarea class="text" v-model="text"></textarea>
         </div>
         <div class="container__bnf"></div>
         <div class="container__chart"></div>
@@ -27,7 +27,11 @@
       header: 'Транслятор',
       projects: [],
       h: 0.01,
-      interval: 2
+      interval: 2,
+      text: `3y”+2y’+y=0
+h = 0.01
+t = [0,1]`,
+      toch: 4
     },
     created(){/*
      let h = math.parse('x^2 + x');
@@ -38,27 +42,51 @@
       this.main();
     },
     methods: {
-      func(x, y){
-        return x + y;
-      },
       main(){
         //3y”+2y’+y=0
         let x = [0];
         let y = [1];
         const a = 3, b = 2 / a, c = 1 / a;
-        this.eiler(x, y, b, c)
+        this.eiler(x, y, b, c);
       },
       eiler(x = [0], y = [0], b, c){
-        let h = 0.01 || this.h, interval = this.interval;
+        let h = 0.01 || this.h;
         const tn = 1, t0 = 0;
         //Расчет числа шагов
         const n = (tn - t0) / h;
-        let data = [];
+        let data = [[x[0], y[0]]];
         for (let i = 1; i < n; i++) {
           x[i] = x[i - 1] + (-b * x[i - 1] - c * y[i - 1]) * h
           y[i] = y[i - 1] + x[i - 1] * h;
-          console.log([+x[i].toFixed(8), +y[i].toFixed(8)]);
-          data.push([+x[i].toFixed(8), +y[i].toFixed(8)]);
+          console.log([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+          data.push([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+        }
+        this.buildChart(data);
+      },
+      runge(x = [0], y = [0], b, c){
+        let h = 0.01 || this.h;
+        let kx1 = {}, kx2 = {}, kx3 = {}, kx4 = {}, deltax = {};
+        let ky1 = {}, ky2 = {}, ky3 = {}, ky4 = {}, deltay = {};
+        const tn = 1, t0 = 0;
+        //Расчет числа шагов
+        const n = (tn - t0) / h;
+        let data = [[x[0], y[0]]];
+
+        for (let i = 0; i < n; i++) {
+          kx1[i] = h * (-c * y[i] - b * x[i]);
+          kx2[i] = h * (-c * y[i] - b * (x[i] + kx1[i] / 2));
+          kx3[i] = h * (-c * y[i] - b * (x[i] + kx2[i] / 2));
+          kx4[i] = h * (-c * y[i] - b * (x[i] + kx3[i]));
+          deltax[i] = 1 / 6 * (kx1[i] + 2 * kx2[i] + 2 * kx3[i] + kx4[i]);
+          x[i + 1] = x[i] + deltax[i];
+          ky1[i] = h * x[i];
+          ky2[i] = h * (x[i] + ky1[i] / 2);
+          ky3[i] = h * (x[i] + ky2[i] / 2);
+          ky4[i] = h * (x[i] + ky3[i]);
+          deltay[i] = 1 / 6 * (ky1[i] + 2 * ky2[i] + 2 * ky3[i] + ky4[i]);
+          y[i + 1] = y[i] + deltay[i];
+          console.log([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+          data.push([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
         }
         this.buildChart(data);
       },
@@ -89,8 +117,8 @@
                 }
               },
               marker: {
-                radius: 1,
-                symbol: 'circle',
+                radius: 3,
+                symbol: 'triangle',
                 states: {
                   hover: {
                     radius: 3
@@ -110,21 +138,6 @@
             data: data.sort((a, b) => a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0))
           }]
         });
-      },
-      runge(){
-        let k1, k2, k3, k4;
-        let i;
-        let x = [1];
-        let y = [1];
-        let n = 5;
-        const h = 0.01;
-        k1 = func(x[i], y[i]);
-        k2 = func(x[i] + h / 2, y[i] + (h * k1) / 2);
-        k3 = func(x[i] + h / 2, y[i] + (h * k2) / 2);
-        k4 = func(x[i] + h, y[i] + h * k3);
-        for (i = 1; i < n; ++i) {
-          y[i + 1] = y[0] + (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
-        }
       }
     }
 
