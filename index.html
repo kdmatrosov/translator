@@ -54,9 +54,9 @@ x4' = -g * cos(x4) / x3`,
             interval: [0, 0]
         },
         created(){/*
-         let h = math.parse('x^2 + x');
+         let this.step = math.parse('x^2 + x');
          let x = math.parse('x');
-         let dh = math.derivative(h, x);
+         let dh = math.derivative(this.step, x);
          console.log(dh.toString());
          console.log(dh.eval({x: 3}));*/
         },
@@ -117,9 +117,7 @@ x4' = -g * cos(x4) / x3`,
             },
             eiler()
             {
-                const n = (this.interval[1] - this.interval[0]) / this.step;
                 let i = this.interval[0] + this.step;
-
                 let series = [];
                 let y = {};
                 this.functions.forEach(func => {
@@ -141,33 +139,54 @@ x4' = -g * cos(x4) / x3`,
                 this.buildChart(series);
 
             },
-            runge(x = [0], y = [0], b, c)
+            runge4()
             {
-                let h = 0.01 || this.h;
-                let kx1 = {}, kx2 = {}, kx3 = {}, kx4 = {}, deltax = {};
-                let ky1 = {}, ky2 = {}, ky3 = {}, ky4 = {}, deltay = {};
-                const tn = 1, t0 = 0;
-                //Расчет числа шагов
-                const n = (tn - t0) / h;
-                let data = [[x[0], y[0]]];
+                let i = this.interval[0];
+                let series = [];
+                let y = {};
+                this.functions.forEach(func => {
+                    series.push({
+                        name: func.name,
+                        data: [[this.interval[0], func.def]]
+                    });
+                    y[func.name] = func.def;
+                });
+                while (i <= this.interval[1]) {
+                    let kx = {};
 
-                for (let i = 0; i < n; i++) {
-                    kx1[i] = h * (-c * y[i] - b * x[i]);
-                    kx2[i] = h * (-c * y[i] - b * (x[i] + kx1[i] / 2));
-                    kx3[i] = h * (-c * y[i] - b * (x[i] + kx2[i] / 2));
-                    kx4[i] = h * (-c * y[i] - b * (x[i] + kx3[i]));
-                    deltax[i] = 1 / 6 * (kx1[i] + 2 * kx2[i] + 2 * kx3[i] + kx4[i]);
-                    x[i + 1] = x[i] + deltax[i];
-                    ky1[i] = h * x[i];
-                    ky2[i] = h * (x[i] + ky1[i] / 2);
-                    ky3[i] = h * (x[i] + ky2[i] / 2);
-                    ky4[i] = h * (x[i] + ky3[i]);
-                    deltay[i] = 1 / 6 * (ky1[i] + 2 * ky2[i] + 2 * ky3[i] + ky4[i]);
-                    y[i + 1] = y[i] + deltay[i];
-                    console.log([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
-                    data.push([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+                    this.functions.forEach(func => {/*
+                        kx['1'] = this.step * this.calc(func.f, Object.assign(y, this.params));
+                        kx['2'] = this.step * f(i + this.step / 2, y1 + k1_1 / 2, y2 + k1_2 / 2, y3 + k1_3 / 2, y4 + k1_4 / 2, 1);
+                        kx['3'] = this.step * f(i + this.step / 2, y1 + k2_1 / 2, y2 + k2_2 / 2, y3 + k2_3 / 2, y4 + k2_4 / 2, 1);
+                        kx['4'] = this.step * f(i + this.step, y1 + k3_1, y2 + k3_2, y3 + k3_3, y4 + k3_4, 1);*/
+                    });
+                    i += this.step;
                 }
-                this.buildChart(data);
+                /*let this.step = 0.01 || this.this.step;
+                 let kx1 = {}, kx2 = {}, kx3 = {}, kx4 = {}, deltax = {};
+                 let ky1 = {}, ky2 = {}, ky3 = {}, ky4 = {}, deltay = {};
+                 const tn = 1, t0 = 0;
+                 //Расчет числа шагов
+                 const n = (tn - t0) / this.step;
+                 let data = [[x[0], y[0]]];
+
+                 for (let i = 0; i < n; i++) {
+                 kx1[i] = this.step * (-c * y[i] - b * x[i]);
+                 kx2[i] = this.step * (-c * y[i] - b * (x[i] + kx1[i] / 2));
+                 kx3[i] = this.step * (-c * y[i] - b * (x[i] + kx2[i] / 2));
+                 kx4[i] = this.step * (-c * y[i] - b * (x[i] + kx3[i]));
+                 deltax[i] = 1 / 6 * (kx1[i] + 2 * kx2[i] + 2 * kx3[i] + kx4[i]);
+                 x[i + 1] = x[i] + deltax[i];
+                 ky1[i] = this.step * x[i];
+                 ky2[i] = this.step * (x[i] + ky1[i] / 2);
+                 ky3[i] = this.step * (x[i] + ky2[i] / 2);
+                 ky4[i] = this.step * (x[i] + ky3[i]);
+                 deltay[i] = 1 / 6 * (ky1[i] + 2 * ky2[i] + 2 * ky3[i] + ky4[i]);
+                 y[i + 1] = y[i] + deltay[i];
+                 console.log([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+                 data.push([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+                 }*/
+                this.buildChart(series);
             }
             ,
             buildChart(series)
