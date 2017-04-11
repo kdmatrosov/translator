@@ -14,134 +14,213 @@
         <div class="container__text">
             <textarea class="text" v-model="text"></textarea>
         </div>
-        <div class="container__bnf"></div>
+        <div class="container__bnf">
+            <button @click="main">Run</button>
+        </div>
         <div class="container__chart"></div>
         <div class="container__error"></div>
     </div>
 </div>
 <div id="chart"></div>
 <script>
-  new Vue({
-    el: '#app',
-    data: {
-      header: 'Транслятор',
-      projects: [],
-      h: 0.01,
-      interval: 2,
-      text: `3y”+2y’+y=0
-h = 0.01
-t = [0,1]`,
-      toch: 4
-    },
-    created(){/*
-     let h = math.parse('x^2 + x');
-     let x = math.parse('x');
-     let dh = math.derivative(h, x);
-     console.log(dh.toString());
-     console.log(dh.eval({x: 3}));*/
-      this.main();
-    },
-    methods: {
-      main(){
-        //3y”+2y’+y=0
-        let x = [0];
-        let y = [1];
-        const a = 3, b = 2 / a, c = 1 / a;
-        this.eiler(x, y, b, c);
-      },
-      eiler(x = [0], y = [0], b, c){
-        let h = 0.01 || this.h;
-        const tn = 1, t0 = 0;
-        //Расчет числа шагов
-        const n = (tn - t0) / h;
-        let data = [[x[0], y[0]]];
-        for (let i = 1; i < n; i++) {
-          x[i] = x[i - 1] + (-b * x[i - 1] - c * y[i - 1]) * h
-          y[i] = y[i - 1] + x[i - 1] * h;
-          console.log([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
-          data.push([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
-        }
-        this.buildChart(data);
-      },
-      runge(x = [0], y = [0], b, c){
-        let h = 0.01 || this.h;
-        let kx1 = {}, kx2 = {}, kx3 = {}, kx4 = {}, deltax = {};
-        let ky1 = {}, ky2 = {}, ky3 = {}, ky4 = {}, deltay = {};
-        const tn = 1, t0 = 0;
-        //Расчет числа шагов
-        const n = (tn - t0) / h;
-        let data = [[x[0], y[0]]];
-
-        for (let i = 0; i < n; i++) {
-          kx1[i] = h * (-c * y[i] - b * x[i]);
-          kx2[i] = h * (-c * y[i] - b * (x[i] + kx1[i] / 2));
-          kx3[i] = h * (-c * y[i] - b * (x[i] + kx2[i] / 2));
-          kx4[i] = h * (-c * y[i] - b * (x[i] + kx3[i]));
-          deltax[i] = 1 / 6 * (kx1[i] + 2 * kx2[i] + 2 * kx3[i] + kx4[i]);
-          x[i + 1] = x[i] + deltax[i];
-          ky1[i] = h * x[i];
-          ky2[i] = h * (x[i] + ky1[i] / 2);
-          ky3[i] = h * (x[i] + ky2[i] / 2);
-          ky4[i] = h * (x[i] + ky3[i]);
-          deltay[i] = 1 / 6 * (ky1[i] + 2 * ky2[i] + 2 * ky3[i] + ky4[i]);
-          y[i + 1] = y[i] + deltay[i];
-          console.log([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
-          data.push([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
-        }
-        this.buildChart(data);
-      },
-      buildChart(data)
-      {
-        Highcharts.chart('chart', {
-          title: {
-            text: 'График'
-          },
-          credits: {
-            enabled: false
-          },
-          xAxis: {
-            legend: {
-              enabled: false
-            }
-          },
-          legend: {
-            enabled: false
-          },
-          plotOptions: {
-            series: {
-              lineWidth: 1,
-              states: {
-                lineWidth: 1,
-                hover: {
-                  lineWidth: 1
+    new Vue({
+        el: '#app',
+        data: {
+            header: 'Транслятор',
+            projects: [],
+            text: `Program
+parametrs
+m = 43.51
+c = 0.15
+p = 1.29
+s = 0.35
+g = 9.81
+values
+x1 = 0
+x2 = 0
+x3 = 655
+x4 = 1.2
+interval [0, 38]
+step 1
+method
+x1' = x3 * cos(x4)
+x2' = x3 * sin(x4)
+x3' = -c * p * s * x3^2/(2*m) - g * sin(x4)
+x4' = -g * cos(x4) / x3`,
+            toch: 4,
+            functions: [],
+            params: {},
+            step: 0,
+            interval: [0, 0]
+        },
+        created(){/*
+         let h = math.parse('x^2 + x');
+         let x = math.parse('x');
+         let dh = math.derivative(h, x);
+         console.log(dh.toString());
+         console.log(dh.eval({x: 3}));*/
+        },
+        methods: {
+            main(){
+                try {
+                    this.getFunctions(this.text.split(/method.*\n/gi)[1]);
+                    this.getStep(this.text.match(/step\s*(\d+)\n/));
+                    this.getInterval(this.text.match(/interval.*\[(.+),(.+)\]\n/));
+                    this.eiler();
+                } catch (ex) {
+                    console.log(ex);
                 }
-              },
-              marker: {
-                radius: 3,
-                symbol: 'triangle',
-                states: {
-                  hover: {
-                    radius: 3
-                  }
+            },
+            getFunctions(text){
+                let fs = text.trim().split('\n');
+                let __functions = [];
+                fs.forEach(function (f) {
+                    let parts = f.split('=');
+                    const name = parts[0].split("'")[0].trim();
+                    __functions.push({name, f: parts[1].trim()});
+                });
+                this.functions = __functions;
+                const __regexp = 'values\\n' + (() => {
+                        let str = '';
+                        __functions.forEach(() => str = str + '(.*)\\n');
+                        return str;
+                    })() + 'inter';
+                this.getDefaults(this.text.match(new RegExp(__regexp)));
+                this.getParams(this.text.match(/parametrs(\n.*)+values/));
+            },
+            getDefaults(ds){
+                for (let i = 1, len = ds.length; i < len; i++) {
+                    let d = ds[i].split('=');
+                    let func = this.functions.find(f => f.name === d[0].trim());
+                    if (func) {
+                        func.def = parseFloat(d[1].trim());
+                    }
                 }
-              },
-              color: '#7f76e9'
-            }
+            },
+            getParams(ps){
+                ps = ps[0].split('parametrs\n')[1];
+                ps = ps.split('\nvalues')[0];
+                ps = ps.split('\n');
+                ps.forEach((_ps) => {
+                    const p = _ps.split('=');
+                    this.params[p[0].trim()] = parseFloat(p[1].trim());
+                })
+            },
+            getStep(text){
+                this.step = parseFloat(text[1]);
+            },
+            getInterval(text){
+                this.interval = [parseFloat(text[1]), parseFloat(text[2])];
+            },
+            calc(f, scope){
+                return math.eval(f, scope);
+            },
+            eiler()
+            {
+                const n = (this.interval[1] - this.interval[0]) / this.step;
+                let i = this.interval[0] + this.step;
 
-          }, tooltip: {
-            formatter: function () {
-              return '<b>' + this.x +
-                '</b> , <b>' + this.y + '</b>';
-            }
-          },
-          series: [{
-            data: data.sort((a, b) => a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0))
-          }]
-        });
-      }
-    }
+                let series = [];
+                let y = {};
+                this.functions.forEach(func => {
+                    series.push({
+                        name: func.name,
+                        data: [[this.interval[0], func.def]]
+                    });
+                    y[func.name] = func.def;
+                });
+                while (i <= this.interval[1]) {
 
-  });
+                    this.functions.forEach(func => {
+                        let s = series.find(ser => ser.name === func.name);
+                        y[func.name] = y[func.name] + this.step * this.calc(func.f, Object.assign(y, this.params));
+                        s.data.push([i, +y[func.name].toFixed(2)]);
+                    });
+                    i += this.step;
+                }
+                this.buildChart(series);
+
+            },
+            runge(x = [0], y = [0], b, c)
+            {
+                let h = 0.01 || this.h;
+                let kx1 = {}, kx2 = {}, kx3 = {}, kx4 = {}, deltax = {};
+                let ky1 = {}, ky2 = {}, ky3 = {}, ky4 = {}, deltay = {};
+                const tn = 1, t0 = 0;
+                //Расчет числа шагов
+                const n = (tn - t0) / h;
+                let data = [[x[0], y[0]]];
+
+                for (let i = 0; i < n; i++) {
+                    kx1[i] = h * (-c * y[i] - b * x[i]);
+                    kx2[i] = h * (-c * y[i] - b * (x[i] + kx1[i] / 2));
+                    kx3[i] = h * (-c * y[i] - b * (x[i] + kx2[i] / 2));
+                    kx4[i] = h * (-c * y[i] - b * (x[i] + kx3[i]));
+                    deltax[i] = 1 / 6 * (kx1[i] + 2 * kx2[i] + 2 * kx3[i] + kx4[i]);
+                    x[i + 1] = x[i] + deltax[i];
+                    ky1[i] = h * x[i];
+                    ky2[i] = h * (x[i] + ky1[i] / 2);
+                    ky3[i] = h * (x[i] + ky2[i] / 2);
+                    ky4[i] = h * (x[i] + ky3[i]);
+                    deltay[i] = 1 / 6 * (ky1[i] + 2 * ky2[i] + 2 * ky3[i] + ky4[i]);
+                    y[i + 1] = y[i] + deltay[i];
+                    console.log([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+                    data.push([+x[i].toFixed(this.toch), +y[i].toFixed(this.toch)]);
+                }
+                this.buildChart(data);
+            }
+            ,
+            buildChart(series)
+            {
+                Highcharts.chart('chart', {
+                    title: {
+                        text: 'График'
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        crosshair: true,
+                        legend: {
+                            enabled: false
+                        }
+                    },
+                    legend: {
+                        enabled: true
+                    },
+                    colors: ['#ff0000', '#52c81f', '#f7a35c', '#8085e9', '#90ed7d',
+                        '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1', '#99C1F7'],
+                    plotOptions: {
+                        series: {
+                            lineWidth: 1,
+                            states: {
+                                lineWidth: 1,
+                                hover: {
+                                    lineWidth: 1
+                                }
+                            },
+                            marker: {
+                                radius: 3,
+                                symbol: 'triangle',
+                                states: {
+                                    hover: {
+                                        radius: 3
+                                    }
+                                }
+                            }
+                        }
+
+                    }, tooltip: {
+                        shared: true,
+                        pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
+                    },
+                    series: series
+                });
+            }
+        }
+
+    })
+    ;
 </script>
 </body>
 </html>
