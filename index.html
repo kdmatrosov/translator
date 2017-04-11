@@ -42,7 +42,7 @@ x3 = 655
 x4 = 1.2
 interval [0, 38]
 step 1
-method
+method eiler
 x1' = x3 * cos(x4)
 x2' = x3 * sin(x4)
 x3' = -c * p * s * x3^2/(2*m) - g * sin(x4)
@@ -50,15 +50,15 @@ x4' = -g * cos(x4) / x3`,
       toch: 4,
       functions: [],
       params: {},
+      method: '',
       step: 0,
-      interval: [0, 0]
+      interval: [0, 0],
+      exceptions: {
+
+      }
     },
-    created(){/*
-     let this.step = math.parse('x^2 + x');
-     let x = math.parse('x');
-     let dh = math.derivative(this.step, x);
-     console.log(dh.toString());
-     console.log(dh.eval({x: 3}));*/
+    created(){
+      
     },
     methods: {
       main(){
@@ -66,7 +66,8 @@ x4' = -g * cos(x4) / x3`,
           this.getFunctions(this.text.split(/method.*\n/gi)[1]);
           this.getStep(this.text.match(/step\s*(\d+)\n/));
           this.getInterval(this.text.match(/interval.*\[(.+),(.+)\]\n/));
-          this.runge4();
+          this.getMethod(this.text.match(/method(.*)/));
+          this.build();
         } catch (ex) {
           console.log(ex);
         }
@@ -112,82 +113,58 @@ x4' = -g * cos(x4) / x3`,
       getInterval(text){
         this.interval = [parseFloat(text[1]), parseFloat(text[2])];
       },
+      getMethod(text){
+        try {
+          this.method = text[1].trim().toLowerCase();
+        } catch (ex) {
+
+        }
+      },
       calc(f, scope){
         return math.eval(f, scope);
       },
-      eiler()
-      {
-        let i = this.interval[0] + this.step;
-        let series = [];
-        let y = {};
-        this.functions.forEach(func => {
-          series.push({
-            name: func.name,
-            data: [[this.interval[0], func.def]]
+      build(){
+        try {
+          let i = this.interval[0] + this.step;
+          let series = [];
+          let y = {};
+          this.functions.forEach(func => {
+            series.push({
+              name: func.name,
+              data: [[this.interval[0], func.def]]
+            });
+            y[func.name] = func.def;
           });
-          y[func.name] = func.def;
-        });
-        while (i <= this.interval[1]) {
+          while (i <= this.interval[1]) {
+            this.functions.forEach(func => {
+              let s = series.find(ser => ser.name === func.name);
+              y[func.name] = this[this.method](y, i, this.step, func.f, func.name);
+              s.data.push([i, +y[func.name].toFixed(2)]);
+            });
+            i += this.step;
+          }
+          this.buildChart(series);
+        } catch (ex){
 
-          this.functions.forEach(func => {
-            let s = series.find(ser => ser.name === func.name);
-            y[func.name] = y[func.name] + this.step * this.calc(func.f, Object.assign(y, this.params, {i}));
-            s.data.push([i, +y[func.name].toFixed(2)]);
-          });
-          i += this.step;
         }
-        this.buildChart(series);
+      },
+      eiler(y, x, dx, f, name)
+      {
+        return y[name] + dx * this.calc(f, Object.assign(y, this.params, {x}));
+      },
+      runge2(y, x, dx, f, name){
+        let s1 = this.calc(f, Object.assign(y, this.params, {x})),
+            s2 = this.calc(f, Object.assign(y, this.params, {x: x + dx, [name]: y[name] + dx * s1}));
+        return y[name] + dx * (s1 + s2) / 2;
+      },
+      runge4(y, x, dx, f, name)
+      {
 
-      },
-      runge2()
-      {
-        let x = this.interval[0];
-        let series = [];
-        let y = {};
-        this.functions.forEach(func => {
-          series.push({
-            name: func.name,
-            data: [[this.interval[0], func.def]]
-          });
-          y[func.name] = func.def;
-        });
-        while (x <= this.interval[1]) {
-          this.functions.forEach(func => {
-            let s = series.find(ser => ser.name === func.name);
-            s.data.push([x, +y[func.name].toFixed(2)]);
-          });
-          x += this.step;
-        }
-        this.buildChart(series);
-      },
-      runge4()
-      {
-        let i = this.interval[0] + this.step;
-        let series = [];
-        let y = {};
-        this.functions.forEach(func => {
-          series.push({
-            name: func.name,
-            data: [[this.interval[0], func.def]]
-          });
-          y[func.name] = func.def;
-        });
-        const rk4 = (y, x, dx, f, name) => {
-          let k1 = dx * this.calc(f, Object.assign(y, this.params, {x})),
-              k2 = dx * this.calc(f, Object.assign(y, this.params, {x:x + dx / 2.0, [name]: y[name] + k1 / 2.0})),
-              k3 = dx * this.calc(f, Object.assign(y, this.params, {x:x + dx / 2.0, [name]: y[name] + k2 / 2.0})),
-              k4 = dx * this.calc(f, Object.assign(y, this.params, {x:x + dx, [name]: y[name] + k3}));
-          return y[name] + (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
-        };
-        while (i <= this.interval[1]) {
-          this.functions.forEach(func => {
-            let s = series.find(ser => ser.name === func.name);
-            y[func.name] = rk4(y, i, this.step, func.f, func.name);
-            s.data.push([i, +y[func.name].toFixed(2)]);
-          });
-          i += this.step;
-        }
-        this.buildChart(series);
+        let k1 = dx * this.calc(f, Object.assign(y, this.params, {x})),
+            k2 = dx * this.calc(f, Object.assign(y, this.params, {x: x + dx / 2.0, [name]: y[name] + k1 / 2.0})),
+            k3 = dx * this.calc(f, Object.assign(y, this.params, {x: x + dx / 2.0, [name]: y[name] + k2 / 2.0})),
+            k4 = dx * this.calc(f, Object.assign(y, this.params, {x: x + dx, [name]: y[name] + k3}));
+        return y[name] + (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
       },
       buildChart(series)
       {
