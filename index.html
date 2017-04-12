@@ -104,6 +104,13 @@ l = ["a"-"z"]`,
                     this.toString = function () {
                         return `Block '${X}' must be before Block '${Y}'`;
                     };
+                },
+                notNumber: function (num) {
+                    this.value = num;
+                    this.message = " must be numeric ";
+                    this.toString = function () {
+                        return this.value + this.message;
+                    };
                 }
             }
         },
@@ -157,6 +164,7 @@ l = ["a"-"z"]`,
                     let d = ds[i].split('=');
                     let func = this.functions.find(f => f.name === d[0].trim());
                     if (func) {
+                        this.isNumber(d[1]);
                         func.def = parseFloat(d[1].trim());
                     }
                 }
@@ -169,6 +177,7 @@ l = ["a"-"z"]`,
                     this.checkSigns(_ps, '=');
                     const p = _ps.split('=');
 
+                    this.isNumber(p[1]);
                     this.params[p[0].trim()] = parseFloat(p[1].trim());
                 })
             },
@@ -293,6 +302,15 @@ l = ["a"-"z"]`,
                     throw new this.exceptions.dublicateSign(sign)
                 }
 
+            },
+            isNumber(n)
+            {
+
+                if (!isNaN(parseFloat(n)) && isFinite(n)) {
+
+                } else {
+                    throw new this.exceptions.notNumber(n);
+                }
             }
         }
 
