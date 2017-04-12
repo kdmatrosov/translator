@@ -31,6 +31,13 @@ body {
 
 .container__bnf {
     padding: 10px;
+    position: relative;
+}
+
+.run {
+    position: absolute;
+    left: -50px;
+    top: 15px;
 }
 
 .container__chart {
@@ -47,7 +54,8 @@ body {
     border: 1px solid #d1d1d1;
     outline: none;
 }
-#chart{
+
+#chart {
     position: fixed;
     left: 0;
     top: 50%;
