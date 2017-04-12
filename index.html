@@ -86,6 +86,13 @@ l = ["a"-"z"]`,
                         return this.message + this.value;
                     };
                 },
+                dublicateSign: function (sign) {
+                    this.value = sign;
+                    this.message = "There is repeated sign ";
+                    this.toString = function () {
+                        return this.message + '"' + this.value + '"';
+                    };
+                },
                 missBlock: function (block) {
                     this.value = block;
                     this.message = "There is no block ";
@@ -129,11 +136,8 @@ l = ["a"-"z"]`,
             getFunctions(text){
                 let fs = text.trim().split('\n');
                 let __functions = [];
-                fs.forEach(function (f) {
-                    const index = f.search('=');
-                    if (index === -1) {
-                        throw new this.exceptions.missSign('=')
-                    }
+                fs.forEach((f) => {
+                    this.checkSigns(f, '=');
                     let parts = f.split('=');
                     const name = parts[0].split("'")[0].trim();
                     __functions.push({name, f: parts[1].trim()});
@@ -149,6 +153,7 @@ l = ["a"-"z"]`,
             },
             getDefaults(ds){
                 for (let i = 1, len = ds.length; i < len; i++) {
+                    this.checkSigns(ds[i], '=');
                     let d = ds[i].split('=');
                     let func = this.functions.find(f => f.name === d[0].trim());
                     if (func) {
@@ -161,11 +166,7 @@ l = ["a"-"z"]`,
                 ps = ps.split('\nvalues')[0];
                 ps = ps.split('\n');
                 ps.forEach((_ps) => {
-                    const index = _ps.search('=');
-                    if (index === -1) {
-                        throw new this.exceptions.missSign('=')
-                    }
-
+                    this.checkSigns(_ps, '=');
                     const p = _ps.split('=');
 
                     this.params[p[0].trim()] = parseFloat(p[1].trim());
@@ -282,6 +283,16 @@ l = ["a"-"z"]`,
                     },
                     series: series
                 });
+            },
+            checkSigns(str, sign){
+                const match = str.match(new RegExp(sign, 'g'));
+                if (match === null) {
+                    throw new this.exceptions.missSign(sign)
+                }
+                if (match.length > 1) {
+                    throw new this.exceptions.dublicateSign(sign)
+                }
+
             }
         }
 
