@@ -15,6 +15,7 @@
             <textarea class="text" v-model="text"></textarea>
         </div>
         <div class="container__bnf">
+            <textarea class="bnf" readonly v-model="bnf"></textarea>
             <button @click="main" class="run">Run</button>
         </div>
         <div class="container__chart"></div>
@@ -53,6 +54,24 @@ x4' = -g * cos(x4) / x3`,
       method: '',
       step: 0,
       interval: [0, 0],
+      bnf: `Lan = "Program Defaults Interval Step Method Operations"
+Defaults = "parametrs" var "=" num | "values" var "=" num
+Interval = "interval" [real, real]
+Step = "step" num
+Method = "method" "eiler"|"runge2"|"runge4"
+Operation = label "=" expression
+expression = part <maths part>
+part = expression | func"("var|num|part")
+maths = "+", "-", "*", "/", "^"
+funcs = "cos"|"sin"
+num = int|real
+var = l<symbol*>
+label = symbol+"'"
+symbol = l|n
+real = int"."int
+int = n...n
+n = ["0"-"9"]
+l = ["a"-"z"]`,
       exceptions: {
 
       }
