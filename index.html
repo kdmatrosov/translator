@@ -19,17 +19,19 @@
             <button @click="main" class="run">Run</button>
         </div>
         <div class="container__chart"></div>
-        <div class="container__error"></div>
+        <div class="container__error">
+            {{error}}
+        </div>
     </div>
 </div>
 <div id="chart"></div>
 <script>
-  new Vue({
-    el: '#app',
-    data: {
-      header: 'Транслятор',
-      projects: [],
-      text: `Program
+    new Vue({
+        el: '#app',
+        data: {
+            header: 'Транслятор',
+            projects: [],
+            text: `Program
 parametrs
 m = 43.51
 c = 0.15
@@ -48,13 +50,13 @@ x1' = x3 * cos(x4)
 x2' = x3 * sin(x4)
 x3' = -c * p * s * x3^2/(2*m) - g * sin(x4)
 x4' = -g * cos(x4) / x3`,
-      toch: 4,
-      functions: [],
-      params: {},
-      method: '',
-      step: 0,
-      interval: [0, 0],
-      bnf: `Lan = "Program Defaults Interval Step Method Operations"
+            toch: 4,
+            functions: [],
+            params: {},
+            method: '',
+            step: 0,
+            interval: [0, 0],
+            bnf: `Lan = "Program Defaults Interval Step Method Operations"
 Defaults = "parametrs" var "=" num | "values" var "=" num
 Interval = "interval" [real, real]
 Step = "step" num
@@ -72,170 +74,219 @@ real = int"."int
 int = n...n
 n = ["0"-"9"]
 l = ["a"-"z"]`,
-      exceptions: {
-
-      }
-    },
-    created(){
-      
-    },
-    methods: {
-      main(){
-        try {
-          this.getFunctions(this.text.split(/method.*\n/gi)[1]);
-          this.getStep(this.text.match(/step\s*(\d+)\n/));
-          this.getInterval(this.text.match(/interval.*\[(.+),(.+)\]\n/));
-          this.getMethod(this.text.match(/method(.*)/));
-          this.build();
-        } catch (ex) {
-          console.log(ex);
-        }
-      },
-      getFunctions(text){
-        let fs = text.trim().split('\n');
-        let __functions = [];
-        fs.forEach(function (f) {
-          let parts = f.split('=');
-          const name = parts[0].split("'")[0].trim();
-          __functions.push({name, f: parts[1].trim()});
-        });
-        this.functions = __functions;
-        const __regexp = 'values\\n' + (() => {
-              let str = '';
-              __functions.forEach(() => str = str + '(.*)\\n');
-              return str;
-            })() + 'inter';
-        this.getDefaults(this.text.match(new RegExp(__regexp)));
-        this.getParams(this.text.match(/parametrs(\n.*)+values/));
-      },
-      getDefaults(ds){
-        for (let i = 1, len = ds.length; i < len; i++) {
-          let d = ds[i].split('=');
-          let func = this.functions.find(f => f.name === d[0].trim());
-          if (func) {
-            func.def = parseFloat(d[1].trim());
-          }
-        }
-      },
-      getParams(ps){
-        ps = ps[0].split('parametrs\n')[1];
-        ps = ps.split('\nvalues')[0];
-        ps = ps.split('\n');
-        ps.forEach((_ps) => {
-          const p = _ps.split('=');
-          this.params[p[0].trim()] = parseFloat(p[1].trim());
-        })
-      },
-      getStep(text){
-        this.step = parseFloat(text[1]);
-      },
-      getInterval(text){
-        this.interval = [parseFloat(text[1]), parseFloat(text[2])];
-      },
-      getMethod(text){
-        try {
-          this.method = text[1].trim().toLowerCase();
-        } catch (ex) {
-
-        }
-      },
-      calc(f, scope){
-        return math.eval(f, scope);
-      },
-      build(){
-        try {
-          let i = this.interval[0] + this.step;
-          let series = [];
-          let y = {};
-          this.functions.forEach(func => {
-            series.push({
-              name: func.name,
-              data: [[this.interval[0], func.def]]
-            });
-            y[func.name] = func.def;
-          });
-          while (i <= this.interval[1]) {
-            this.functions.forEach(func => {
-              let s = series.find(ser => ser.name === func.name);
-              y[func.name] = this[this.method](y, i, this.step, func.f, func.name);
-              s.data.push([i, +y[func.name].toFixed(2)]);
-            });
-            i += this.step;
-          }
-          this.buildChart(series);
-        } catch (ex){
-
-        }
-      },
-      eiler(y, x, dx, f, name)
-      {
-        return y[name] + dx * this.calc(f, Object.assign(y, this.params, {x}));
-      },
-      runge2(y, x, dx, f, name){
-        let s1 = this.calc(f, Object.assign(y, this.params, {x})),
-            s2 = this.calc(f, Object.assign(y, this.params, {x: x + dx, [name]: y[name] + dx * s1}));
-        return y[name] + dx * (s1 + s2) / 2;
-      },
-      runge4(y, x, dx, f, name)
-      {
-
-        let k1 = dx * this.calc(f, Object.assign(y, this.params, {x})),
-            k2 = dx * this.calc(f, Object.assign(y, this.params, {x: x + dx / 2.0, [name]: y[name] + k1 / 2.0})),
-            k3 = dx * this.calc(f, Object.assign(y, this.params, {x: x + dx / 2.0, [name]: y[name] + k2 / 2.0})),
-            k4 = dx * this.calc(f, Object.assign(y, this.params, {x: x + dx, [name]: y[name] + k3}));
-        return y[name] + (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
-      },
-      buildChart(series)
-      {
-        Highcharts.chart('chart', {
-          title: {
-            text: 'График'
-          },
-          credits: {
-            enabled: false
-          },
-          xAxis: {
-            crosshair: true,
-            legend: {
-              enabled: false
-            }
-          },
-          legend: {
-            enabled: true
-          },
-          colors: ['#ff0000', '#52c81f', '#f7a35c', '#8085e9', '#90ed7d',
-            '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1', '#99C1F7'],
-          plotOptions: {
-            series: {
-              lineWidth: 1,
-              states: {
-                lineWidth: 1,
-                hover: {
-                  lineWidth: 1
+            exceptions: {},
+            error: ''
+        },
+        created(){
+            this.exceptions = {
+                missSign: function (sign) {
+                    this.value = sign;
+                    this.message = "There is no sign ";
+                    this.toString = function () {
+                        return this.message + this.value;
+                    };
+                },
+                missBlock: function (block) {
+                    this.value = block;
+                    this.message = "There is no block ";
+                    this.toString = function () {
+                        return this.message + this.value;
+                    };
+                },
+                orderBlock: function (X, Y) {
+                    this.toString = function () {
+                        return `Block '${X}' must be before Block '${Y}'`;
+                    };
                 }
-              },
-              marker: {
-                radius: 3,
-                symbol: 'triangle',
-                states: {
-                  hover: {
-                    radius: 3
-                  }
-                }
-              }
             }
+        },
+        methods: {
+            main(){
 
-          }, tooltip: {
-            shared: true,
-            pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
-          },
-          series: series
-        });
-      }
-    }
+                try {
+                    this.text = this.text.split('\n').filter(line => line !== '').join('\n');
+                    let last_block = {};
+                    ['parametrs', 'values', 'interval', 'step', 'method'].forEach((block, i) => {
+                        const index = this.text.search(block);
+                        if (index === -1) {
+                            throw new this.exceptions.missBlock(block)
+                        }
+                        if (i && index < last_block.index) {
+                            throw new this.exceptions.orderBlock(block, last_block.block)
+                        }
+                        last_block = {block, index};
+                    });
 
-  })
-  ;
+                    this.getFunctions(this.text.split(/method.*\n/gi)[1]);
+                    this.getStep(this.text.match(/step\s*(\d+)\n/));
+                    this.getInterval(this.text.match(/interval.*\[(.+),(.+)\]\n/));
+                    this.getMethod(this.text.match(/method(.*)/));
+                    this.build();
+                } catch (ex) {
+                    this.error = ex.toString();
+                }
+            },
+            getFunctions(text){
+                let fs = text.trim().split('\n');
+                let __functions = [];
+                fs.forEach(function (f) {
+                    const index = f.search('=');
+                    if (index === -1) {
+                        throw new this.exceptions.missSign('=')
+                    }
+                    let parts = f.split('=');
+                    const name = parts[0].split("'")[0].trim();
+                    __functions.push({name, f: parts[1].trim()});
+                });
+                this.functions = __functions;
+                const __regexp = 'values\\n' + (() => {
+                        let str = '';
+                        __functions.forEach(() => str = str + '(.*)\\n');
+                        return str;
+                    })() + 'inter';
+                this.getDefaults(this.text.match(new RegExp(__regexp)));
+                this.getParams(this.text.match(/parametrs(\n.*)+values/));
+            },
+            getDefaults(ds){
+                for (let i = 1, len = ds.length; i < len; i++) {
+                    let d = ds[i].split('=');
+                    let func = this.functions.find(f => f.name === d[0].trim());
+                    if (func) {
+                        func.def = parseFloat(d[1].trim());
+                    }
+                }
+            },
+            getParams(ps){
+                ps = ps[0].split('parametrs\n')[1];
+                ps = ps.split('\nvalues')[0];
+                ps = ps.split('\n');
+                ps.forEach((_ps) => {
+                    const index = _ps.search('=');
+                    if (index === -1) {
+                        throw new this.exceptions.missSign('=')
+                    }
+
+                    const p = _ps.split('=');
+
+                    this.params[p[0].trim()] = parseFloat(p[1].trim());
+                })
+            },
+            getStep(text){
+                this.step = parseFloat(text[1]);
+            },
+            getInterval(text){
+                this.interval = [parseFloat(text[1]), parseFloat(text[2])];
+            },
+            getMethod(text){
+                try {
+                    this.method = text[1].trim().toLowerCase();
+                } catch (ex) {
+
+                }
+            },
+            calc(f, scope){
+                return math.eval(f, scope);
+            },
+            build(){
+                try {
+                    let i = this.interval[0] + this.step;
+                    let series = [];
+                    let y = {};
+                    this.functions.forEach(func => {
+                        series.push({
+                            name: func.name,
+                            data: [[this.interval[0], func.def]]
+                        });
+                        y[func.name] = func.def;
+                    });
+                    while (i <= this.interval[1]) {
+                        this.functions.forEach(func => {
+                            let s = series.find(ser => ser.name === func.name);
+                            y[func.name] = this[this.method](y, i, this.step, func.f, func.name);
+                            s.data.push([i, +y[func.name].toFixed(2)]);
+                        });
+                        i += this.step;
+                    }
+                    this.buildChart(series);
+                } catch (ex) {
+
+                }
+            },
+            eiler(y, x, dx, f, name)
+            {
+                return y[name] + dx * this.calc(f, Object.assign(y, this.params, {x}));
+            },
+            runge2(y, x, dx, f, name){
+                let s1 = this.calc(f, Object.assign(y, this.params, {x})),
+                    s2 = this.calc(f, Object.assign(y, this.params, {x: x + dx, [name]: y[name] + dx * s1}));
+                return y[name] + dx * (s1 + s2) / 2;
+            },
+            runge4(y, x, dx, f, name)
+            {
+
+                let k1 = dx * this.calc(f, Object.assign(y, this.params, {x})),
+                    k2 = dx * this.calc(f, Object.assign(y, this.params, {
+                            x: x + dx / 2.0,
+                            [name]: y[name] + k1 / 2.0
+                        })),
+                    k3 = dx * this.calc(f, Object.assign(y, this.params, {
+                            x: x + dx / 2.0,
+                            [name]: y[name] + k2 / 2.0
+                        })),
+                    k4 = dx * this.calc(f, Object.assign(y, this.params, {x: x + dx, [name]: y[name] + k3}));
+                return y[name] + (k1 + 2.0 * k2 + 2.0 * k3 + k4) / 6.0;
+            },
+            buildChart(series)
+            {
+                Highcharts.chart('chart', {
+                    title: {
+                        text: 'График'
+                    },
+                    credits: {
+                        enabled: false
+                    },
+                    xAxis: {
+                        crosshair: true,
+                        legend: {
+                            enabled: false
+                        }
+                    },
+                    legend: {
+                        enabled: true
+                    },
+                    colors: ['#ff0000', '#52c81f', '#f7a35c', '#8085e9', '#90ed7d',
+                        '#f15c80', '#e4d354', '#2b908f', '#f45b5b', '#91e8e1', '#99C1F7'],
+                    plotOptions: {
+                        series: {
+                            lineWidth: 1,
+                            states: {
+                                lineWidth: 1,
+                                hover: {
+                                    lineWidth: 1
+                                }
+                            },
+                            marker: {
+                                radius: 3,
+                                symbol: 'triangle',
+                                states: {
+                                    hover: {
+                                        radius: 3
+                                    }
+                                }
+                            }
+                        }
+
+                    }, tooltip: {
+                        shared: true,
+                        pointFormat: '<span style="color:{point.color}">\u25CF</span> {series.name}: <b>{point.y}</b><br/>'
+                    },
+                    series: series
+                });
+            }
+        }
+
+    })
+    ;
 </script>
 </body>
 </html>
