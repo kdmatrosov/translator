@@ -116,6 +116,8 @@ l = ["a"-"z"]`,
         },
         methods: {
             main(){
+			
+				this.error = '';
 
                 try {
                     this.text = this.text.split('\n').filter(line => line !== '').join('\n');
@@ -132,7 +134,7 @@ l = ["a"-"z"]`,
                     });
 
                     this.getFunctions(this.text.split(/method.*\n/gi)[1]);
-                    this.getStep(this.text.match(/step\s*(\d+)\n/));
+                    this.getStep(this.text.match(/step\s*(\d+\.?\d*)\n/));
                     this.getInterval(this.text.match(/interval.*\[(.+),(.+)\]\n/));
                     this.getMethod(this.text.match(/method(.*)/));
                     this.build();
