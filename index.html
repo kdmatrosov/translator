@@ -12,7 +12,7 @@
 <div id="app">
     <div class="container">
         <div class="container__text">
-            <textarea class="text" v-model="text"></textarea>
+            <textarea class="text" v-model="text" ref='input'></textarea>
         </div>
         <div class="container__bnf">
             <textarea class="bnf" readonly v-model="bnf"></textarea>
@@ -140,6 +140,14 @@ l = ["a"-"z"]`,
                     this.build();
                 } catch (ex) {
                     this.error = ex.toString();
+                    let pos = 0;
+                    for (let key in this.exceptions)
+                    {
+                        if (ex instanceof this.exceptions[key]) {
+                            console.log(key);
+                        }
+                    }
+                    this.setCaretToPos(this.$refs.input, pos);
                 }
             },
             getFunctions(text){
@@ -313,6 +321,22 @@ l = ["a"-"z"]`,
                 } else {
                     throw new this.exceptions.notNumber(n);
                 }
+            },
+            setSelectionRange(input, selectionStart, selectionEnd) {
+              if (input.setSelectionRange) {
+                input.focus();
+                input.setSelectionRange(selectionStart, selectionEnd);
+              }
+              else if (input.createTextRange) {
+                var range = input.createTextRange();
+                range.collapse(true);
+                range.moveEnd('character', selectionEnd);
+                range.moveStart('character', selectionStart);
+                range.select();
+              }
+            },
+            setCaretToPos (input, pos) {
+              this.setSelectionRange(input, pos, pos);
             }
         }
 
