@@ -121,7 +121,21 @@ l = ["a"-"z"]`,
                     this.toString = function () {
                         return this.value + this.message;
                     };
-                }
+                },
+				noMethod: function(method){
+				
+					self.getCaretPos(method);
+					this.toString = function(){
+						return `There is no method ${method}`;
+					};
+				},
+				bracketCount: function(expr, more)
+				{
+					self.getCaretPos(expr.replace("\\(", "\\(").replace("\\)", "\\)"));
+					this.toString = function(){
+						return '( ' +(more ? '>' : '<')+' )' 
+					};
+				}
             }
         },
         methods: {
@@ -152,7 +166,7 @@ l = ["a"-"z"]`,
                     let pos = this.pos;
                     for (let key in this.exceptions)
                     {
-                        if (ex instanceof this.exceptions[key]) {
+                        if (Object.keys(ex).length && ex instanceof this.exceptions[key]) {
                             console.log(key);
                         }
                     }
@@ -169,6 +183,7 @@ l = ["a"-"z"]`,
                     const name = parts[0].split("'")[0].trim();
                     __functions.push({name, f: parts[1].trim()});
                 });
+				__functions.forEach(this.checkExpression);
                 this.functions = __functions;
                 const __regexp = 'values\\n' + (() => {
                         let str = '';
@@ -208,11 +223,12 @@ l = ["a"-"z"]`,
                 this.interval = [parseFloat(text[1]), parseFloat(text[2])];
             },
             getMethod(text){
-                try {
+			const METHODS = ['eiler', 'runge2', 'runge4'];
                     this.method = text[1].trim().toLowerCase();
-                } catch (ex) {
-
-                }
+					if (!METHODS.includes(this.method))
+					{
+						throw new this.exceptions.noMethod(this.method);
+					}
             },
             calc(f, scope){
                 return math.eval(f, scope);
@@ -332,6 +348,22 @@ l = ["a"-"z"]`,
                     throw new this.exceptions.notNumber(n);
                 }
             },
+			checkExpression(expr){
+			    const signs = ['+', '-','*','/','^'];
+				const bracket = {
+					open: "\\(",
+					close: "\\)"
+				};
+				const LIST_OF_ERRORS = [
+					//
+				];
+				const open = expr.f.match(new RegExp(bracket.open, "g")), close = expr.f.match(new RegExp(bracket.close, "g"));
+				if (open.length !== close.length)
+				{
+					throw new this.exceptions.bracketCount(expr.name + "'", open.length > close.length);
+				}
+			
+			},
             setSelectionRange(input, selectionStart, selectionEnd) {
               if (input.setSelectionRange) {
                 input.focus();
