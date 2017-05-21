@@ -64,7 +64,10 @@ Method = "method" "eiler"|"runge2"|"runge4"
 Operation = label "=" expression
 expression = part <maths part>
 part = expression | func"("var|num|part")
-maths = "+", "-", "*", "/", "^"
+maths = a&s|m&d|exp
+exp = "^"
+m&d = "*", "/"
+a&s = "+", "-"
 funcs = "cos"|"sin"
 num = int|real
 var = l<symbol*>
@@ -75,18 +78,22 @@ int = n...n
 n = ["0"-"9"]
 l = ["a"-"z"]`,
             exceptions: {},
-            error: ''
+            error: '',
+			
         },
         created(){
+		    let self =this;
             this.exceptions = {
-                missSign: function (sign) {
+                missSign: function (sign, place) {
+					self.getCaretPos(place);
                     this.value = sign;
                     this.message = "There is no sign ";
                     this.toString = function () {
                         return this.message + this.value;
                     };
                 },
-                dublicateSign: function (sign) {
+                dublicateSign: function (sign, place) {
+					self.getCaretPos(place);
                     this.value = sign;
                     this.message = "There is repeated sign ";
                     this.toString = function () {
@@ -94,6 +101,7 @@ l = ["a"-"z"]`,
                     };
                 },
                 missBlock: function (block) {
+					self.getCaretPos('');
                     this.value = block;
                     this.message = "There is no block ";
                     this.toString = function () {
@@ -101,11 +109,13 @@ l = ["a"-"z"]`,
                     };
                 },
                 orderBlock: function (X, Y) {
+					self.getCaretPos(X);
                     this.toString = function () {
                         return `Block '${X}' must be before Block '${Y}'`;
                     };
                 },
                 notNumber: function (num) {
+					self.getCaretPos(num);
                     this.value = num;
                     this.message = " must be numeric ";
                     this.toString = function () {
@@ -139,8 +149,7 @@ l = ["a"-"z"]`,
                     this.getMethod(this.text.match(/method(.*)/));
                     this.build();
                 } catch (ex) {
-                    this.error = ex.toString();
-                    let pos = 0;
+                    let pos = this.pos;
                     for (let key in this.exceptions)
                     {
                         if (ex instanceof this.exceptions[key]) {
@@ -148,6 +157,7 @@ l = ["a"-"z"]`,
                         }
                     }
                     this.setCaretToPos(this.$refs.input, pos);
+                    this.error =  this.error_pos+ex.toString() ;
                 }
             },
             getFunctions(text){
@@ -337,7 +347,20 @@ l = ["a"-"z"]`,
             },
             setCaretToPos (input, pos) {
               this.setSelectionRange(input, pos, pos);
-            }
+            },
+			getCaretPos(place)
+			{
+			    this.pos = this.text.search(place.trim());
+				let check = false;
+				this.text.split('\n').forEach((l, i) => {
+				 let index = l.search(place);
+				 if (!check && index !== -1){
+						check = true;
+						this.error_pos = `[${i + 1}line ${index + 1}pos]`
+				 }
+			  });
+			  return 
+			}
         }
 
     })
