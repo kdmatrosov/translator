@@ -84,6 +84,12 @@ l = ["a"-"z"]`,
         created(){
 		    let self =this;
             this.exceptions = {
+				programBlock: function()
+				{
+					this.toString = function(){
+						return 'Therу must be block Program in the beginning';
+					};
+				},
                 missSign: function (sign, place) {
 					self.getCaretPos(place);
                     this.value = sign;
@@ -145,6 +151,10 @@ l = ["a"-"z"]`,
 
                 try {
                     this.text = this.text.split('\n').filter(line => line !== '').join('\n');
+                        const index = this.text.search('Program');
+                        if (index === -1) {
+                            throw new this.exceptions.programBlock()
+                        }
                     let last_block = {};
                     ['parametrs', 'values', 'interval', 'step', 'method'].forEach((block, i) => {
                         const index = this.text.search(block);
@@ -171,7 +181,7 @@ l = ["a"-"z"]`,
                         }
                     }
                     this.setCaretToPos(this.$refs.input, pos);
-                    this.error =  this.error_pos+ex.toString() ;
+                    this.error =  (this.error_pos||'')+ex.toString() ;
                 }
             },
             getFunctions(text){
