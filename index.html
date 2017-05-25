@@ -166,6 +166,12 @@ l = ["a"-"z"]`,
                         return 'Signs in Row';
                     };
                 },
+                signInTheEnd: function (expr) {
+                    self.getCaretPos(expr);
+                    this.toString = function () {
+                        return 'Sign in the end';
+                    };
+                },
                 notFullScope: function () {
                     self.getCaretPos('parametrs');
                     this.toString = function () {
@@ -433,6 +439,10 @@ l = ["a"-"z"]`,
                 const inrow = f.match(signsinrow) || [];
                 if (inrow.length) {
                     throw new this.exceptions.signsInRow(expr.name + this.exprSign);
+                }
+                const signinthend = f.match(new RegExp(signs+'$')) || [];
+                if (signinthend.length) {
+                    throw new this.exceptions.signInTheEnd(expr.name + this.exprSign);
                 }
 
             },
