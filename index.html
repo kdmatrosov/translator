@@ -83,7 +83,7 @@
      step 0.5
      method eiler
      x1! = (-a)*x1*x2
-     x2! = a*x2*x2-(b+c)*x2
+     x2! = a*x1*x2-(b+c)*x2
      x3! = b*x2`,
             toch: 4,
             functions: [],
@@ -355,13 +355,14 @@ l = ["a"-"z"]`,
                         });
                         y[func.name] = func.def;
                     });
-                    console.log(y);
                     while (i <= this.interval[1]) {
+                        let next ={};
                         this.functions.forEach((func) => {
                             let s = series.find(ser => ser.name === func.name);
-                            y[func.name] = this[this.method](y, i, this.step, func.f, func.name);
-                            s.data.push([i, +y[func.name].toFixed(2)]);
+                            next[func.name] = this[this.method](y, i, this.step, func.f, func.name);
+                            s.data.push([i, +next[func.name].toFixed(2)]);
                         });
+                        Object.assign(y, next);
                         i += this.step;
                     }
                     this.buildChart(series);
