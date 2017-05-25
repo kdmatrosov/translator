@@ -159,6 +159,12 @@ l = ["a"-"z"]`,
                     this.toString = function () {
                         return 'Sign ' + (before ? 'before' : 'after') + ' bracket';
                     };
+                },
+                signsInRow: function (expr) {
+                    self.getCaretPos(expr);
+                    this.toString = function () {
+                        return 'Signs in Row';
+                    };
                 }
             }
         },
@@ -265,7 +271,7 @@ l = ["a"-"z"]`,
                 })
             },
             getStep(text){
-                this.isNumber(text[1]);
+                this.isNumber(text ? text[1] : NaN);
                 this.step = parseFloat(text[1]);
             },
             getInterval(text){
@@ -391,7 +397,6 @@ l = ["a"-"z"]`,
             },
             isNumber(n)
             {
-
                 if (!isNaN(parseFloat(n)) && isFinite(n)) {
 
                 } else {
@@ -399,7 +404,8 @@ l = ["a"-"z"]`,
                 }
             },
             checkExpression(expr){
-                const signs = '[+|-|\*|\/]';
+                const signs = '[\+|\-|\*|\/|^]';
+                const signsinrow = /([*|+|\-|\/|^])\s*([*|+|\-|\/|^])/g;
                 const bracket = {
                     open: "\\(",
                     close: "\\)"
@@ -407,15 +413,20 @@ l = ["a"-"z"]`,
                 const LIST_OF_ERRORS = [
                     //
                 ];
-                const open = expr.f.match(new RegExp(bracket.open, "g")),
-                    close = expr.f.match(new RegExp(bracket.close, "g"));
+                const f = expr.f.split('').filter(v => v !== ' ').join('');
+                const open = f.match(new RegExp(bracket.open, "g")) || [],
+                    close = f.match(new RegExp(bracket.close, "g")) || [];
                 if (open.length !== close.length) {
                     throw new this.exceptions.bracketCount(expr.name + this.exprSign, open.length > close.length);
                 }
-                const afterOpen = expr.f.match(new RegExp(bracket.open + signs, "g")) || [],
-                    beforeClose = expr.f.match(new RegExp(signs + bracket.close, "g")) || [];
+                const afterOpen = f.match(new RegExp(bracket.open + signs, "g")) || [],
+                    beforeClose = f.match(new RegExp(signs + bracket.close, "g")) || [];
                 if (beforeClose.length || afterOpen.length) {
                     throw new this.exceptions.singBracket(expr.name + this.exprSign, beforeClose.length > 0);
+                }
+                const inrow = f.match(signsinrow) || [];
+                if (inrow.length) {
+                    throw new this.exceptions.signsInRow(expr.name + this.exprSign);
                 }
 
             },
