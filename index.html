@@ -147,6 +147,12 @@ l = ["a"-"z"]`,
                     this.toString = function () {
                         return this.value + this.message;
                     };
+                },
+                countDefault: function () {
+                    self.getCaretPos('values');
+                    this.toString = function () {
+                        return 'Default values are not the same amount as functions';
+                    };
                 }
             }
         },
@@ -208,16 +214,15 @@ l = ["a"-"z"]`,
                 });
                 __functions.forEach(this.checkExpression);
                 this.functions = __functions;
-                const __regexp = 'values\\n' + (() => {
-                        let str = '';
-                        __functions.forEach(() => str = str + '(.*)\\n');
-                        return str;
-                    })() + 'inter';
-                this.getDefaults(this.text.match(new RegExp(__regexp)));
+                let values = this.text.split('values\n')[1].split('inter')[0].split('\n').filter(v => v !== '');
+                this.getDefaults(values);
                 this.getParams(this.text.match(/parametrs(\n.*)+values/));
             },
             getDefaults(ds){
-                for (let i = 1, len = ds.length; i < len; i++) {
+                if (this.functions.length !== ds.length) {
+                    throw new this.exceptions.countDefault();
+                }
+                for (let i = 0, len = ds.length; i < len; i++) {
                     this.checkSigns(ds[i], '=');
                     let d = ds[i].split('='), left = d[0].trim(), right = d[1].trim();
                     let func = this.functions.find(f => f.name === left);
