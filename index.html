@@ -46,16 +46,17 @@ x4 = 1.2
 interval [0, 38]
 step 1
 method eiler
-x1' = x3 * cos(x4)
-x2' = x3 * sin(x4)
-x3' = -c * p * s * x3^2/(2*m) - g * sin(x4)
-x4' = -g * cos(x4) / x3`,
+x1! = x3 * cos(x4)
+x2! = x3 * sin(x4)
+x3! = -c * p * s * x3^2/(2*m) - g * sin(x4)
+x4! = -g * cos(x4) / x3`,
             toch: 4,
             functions: [],
             params: {},
             method: '',
             step: 0,
             interval: [0, 0],
+            exprSign: '!',
             bnf: `Lan = "Program Defaults Interval Step Method Operations"
 Defaults = "parametrs" var "=" num | "values" var "=" num
 Interval = "interval" [real, real]
@@ -141,7 +142,7 @@ l = ["a"-"z"]`,
                 },
                 noPart: function (expr, right) {
                     self.getCaretPos(expr);
-                    this.value = expr.trim();
+                    this.value = `"${expr.trim()}"`;
                     this.message = ' has no ' + (right ? 'right' : 'left') + ' part';
                     this.toString = function () {
                         return this.value + this.message;
@@ -186,6 +187,7 @@ l = ["a"-"z"]`,
                     }
                     this.setCaretToPos(this.$refs.input, pos);
                     this.error = (this.error_pos || '') + ex.toString();
+                    this.error_pos = '';
                 }
             },
             getFunctions(text){
@@ -194,7 +196,7 @@ l = ["a"-"z"]`,
                 fs.forEach((func) => {
                     this.checkSigns(func, '=');
                     let parts = func.split('=');
-                    const name = parts[0].split("'")[0].trim(), f = parts[1].trim();
+                    const name = parts[0].split(this.exprSign)[0].trim(), f = parts[1].trim();
                     if (name === '') {
                         throw new this.exceptions.noPart(func);
                     } else if (f === '') {
@@ -217,11 +219,18 @@ l = ["a"-"z"]`,
             getDefaults(ds){
                 for (let i = 1, len = ds.length; i < len; i++) {
                     this.checkSigns(ds[i], '=');
-                    let d = ds[i].split('=');
-                    let func = this.functions.find(f => f.name === d[0].trim());
+                    let d = ds[i].split('='), left = d[0].trim(), right = d[1].trim();
+                    let func = this.functions.find(f => f.name === left);
                     if (func) {
-                        this.isNumber(d[1]);
-                        func.def = parseFloat(d[1].trim());
+                        if (left === '') {
+                            throw new this.exceptions.noPart(ds);
+                        } else if (right === '') {
+                            throw new this.exceptions.noPart(ds, true);
+                        }
+                        else {
+                            this.isNumber(right);
+                            func.def = parseFloat(right);
+                        }
                     }
                 }
             },
@@ -231,16 +240,26 @@ l = ["a"-"z"]`,
                 ps = ps.split('\n');
                 ps.forEach((_ps) => {
                     this.checkSigns(_ps, '=');
-                    const p = _ps.split('=');
+                    const p = _ps.split('='), left = p[0].trim(), right = p[1].trim();
 
-                    this.isNumber(p[1]);
-                    this.params[p[0].trim()] = parseFloat(p[1].trim());
+                    if (left === '') {
+                        throw new this.exceptions.noPart(_ps);
+                    } else if (right === '') {
+                        throw new this.exceptions.noPart(_ps, true);
+                    }
+                    else {
+                        this.isNumber(right);
+                        this.params[left] = parseFloat(right);
+                    }
                 })
             },
             getStep(text){
+                this.isNumber(text[1]);
                 this.step = parseFloat(text[1]);
             },
             getInterval(text){
+                this.isNumber(text[1]);
+                this.isNumber(text[2]);
                 this.interval = [parseFloat(text[1]), parseFloat(text[2])];
             },
             getMethod(text){
@@ -380,7 +399,7 @@ l = ["a"-"z"]`,
                 const open = expr.f.match(new RegExp(bracket.open, "g")),
                     close = expr.f.match(new RegExp(bracket.close, "g"));
                 if (open.length !== close.length) {
-                    throw new this.exceptions.bracketCount(expr.name + "'", open.length > close.length);
+                    throw new this.exceptions.bracketCount(expr.name + this.exprSign, open.length > close.length);
                 }
 
             },
