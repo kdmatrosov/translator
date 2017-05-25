@@ -26,30 +26,65 @@
 </div>
 <div id="chart"></div>
 <script>
+    /*
+     Program
+     parametrs
+     m = 43.51
+     c = 0.15
+     p = 1.29
+     s = 0.35
+     g = 9.81
+     values
+     x1 = 0
+     x2 = 0
+     x3 = 655
+     x4 = 1.2
+     interval [0, 38]
+     step 1
+     method eiler
+     x1! = x3 * cos(x4)
+     x2! = x3 * sin(x4)
+     x3! = -c * p * s * x3^2/(2*m) - g * sin(x4)
+     x4! = -g * cos(x4) / x3
+
+
+     Program
+     parametrs
+     a=0.001
+     b=0.07
+     c=0.01
+     values
+     x1 = 620
+     x2 = 10
+     x3 = 70
+     interval [0, 50]
+     step 0.5
+     method eiler
+     x1! = (-a)*x1*x2
+     x2! = a*x2*x2-(b+c)*x2
+     x3! = b*x2
+     */
     new Vue({
         el: '#app',
         data: {
             header: 'Транслятор',
             projects: [],
-            text: `Program
-parametrs
-m = 43.51
-c = 0.15
-p = 1.29
-s = 0.35
-g = 9.81
-values
-x1 = 0
-x2 = 0
-x3 = 655
-x4 = 1.2
-interval [0, 38]
-step 1
-method eiler
-x1! = x3 * cos(x4)
-x2! = x3 * sin(x4)
-x3! = -c * p * s * x3^2/(2*m) - g * sin(x4)
-x4! = -g * cos(x4) / x3`,
+            text: `
+     Program
+     parametrs
+     a=0.001
+     b=0.07
+     c=0.01
+     values
+     x1 = 620
+     x2 = 10
+     x3 = 70
+     interval [0, 50]
+     step 0.5
+     method eiler
+     x1! = (-a)*x1*x2
+     x2! = a*x2*x2-(b+c)*x2
+     x3! = b*x2`,
             toch: 4,
             functions: [],
             params: {},
@@ -186,7 +221,13 @@ l = ["a"-"z"]`,
                 this.error = '';
 
                 try {
+                    console.log(this.text);
                     this.text = this.text.split('\n').filter(line => line !== '').join('\n');
+                    this.text = this.text.split('\n');
+                    for (let i = 0, len = this.text.length; i < len; i++) {
+                        this.text[i] = this.text[i].trim();
+                    }
+                    this.text = this.text.join('\n');
                     const index = this.text.search('Program');
                     if (index === -1) {
                         throw new this.exceptions.programBlock()
@@ -259,7 +300,7 @@ l = ["a"-"z"]`,
                         else {
                             this.isNumber(right);
                             func.def = parseFloat(right);
-                            console.log( func.def)
+                            console.log(func.def)
                         }
                     }
                 }
@@ -318,7 +359,7 @@ l = ["a"-"z"]`,
                     while (i <= this.interval[1]) {
                         this.functions.forEach((func) => {
                             let s = series.find(ser => ser.name === func.name);
-                            y[func.name] = this[this.method]({}, y, i, this.step, func.f, func.name);
+                            y[func.name] = this[this.method](y, i, this.step, func.f, func.name);
                             s.data.push([i, +y[func.name].toFixed(2)]);
                         });
                         i += this.step;
@@ -442,7 +483,7 @@ l = ["a"-"z"]`,
                 if (inrow.length) {
                     throw new this.exceptions.signsInRow(expr.name + this.exprSign);
                 }
-                const signinthend = f.match(new RegExp(signs+'$')) || [];
+                const signinthend = f.match(new RegExp(signs + '$')) || [];
                 if (signinthend.length) {
                     throw new this.exceptions.signInTheEnd(expr.name + this.exprSign);
                 }
