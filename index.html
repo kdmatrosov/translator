@@ -385,7 +385,7 @@ l = ["a"-"z"]`,
                     throw new this.exceptions.missSign(sign, str)
                 }
                 if (match.length > 1) {
-                    throw new this.exceptions.dublicateSign(sign, str)
+                    throw new this.exceptions.dublicateSign(sign, str.split('=')[0])
                 }
 
             },
