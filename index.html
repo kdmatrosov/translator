@@ -153,6 +153,12 @@ l = ["a"-"z"]`,
                     this.toString = function () {
                         return 'Default values are not the same amount as functions';
                     };
+                },
+                singBracket: function (expr, before) {
+                    self.getCaretPos(expr);
+                    this.toString = function () {
+                        return 'Sign ' + (before ? 'before' : 'after') + ' bracket';
+                    };
                 }
             }
         },
@@ -393,7 +399,7 @@ l = ["a"-"z"]`,
                 }
             },
             checkExpression(expr){
-                const signs = ['+', '-', '*', '/', '^'];
+                const signs = '[+|-|\*|\/]';
                 const bracket = {
                     open: "\\(",
                     close: "\\)"
@@ -405,6 +411,11 @@ l = ["a"-"z"]`,
                     close = expr.f.match(new RegExp(bracket.close, "g"));
                 if (open.length !== close.length) {
                     throw new this.exceptions.bracketCount(expr.name + this.exprSign, open.length > close.length);
+                }
+                const afterOpen = expr.f.match(new RegExp(bracket.open + signs, "g")) || [],
+                    beforeClose = expr.f.match(new RegExp(signs + bracket.close, "g")) || [];
+                if (beforeClose.length || afterOpen.length) {
+                    throw new this.exceptions.singBracket(expr.name + this.exprSign, beforeClose.length > 0);
                 }
 
             },
