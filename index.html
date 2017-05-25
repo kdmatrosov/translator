@@ -259,6 +259,7 @@ l = ["a"-"z"]`,
                         else {
                             this.isNumber(right);
                             func.def = parseFloat(right);
+                            console.log( func.def)
                         }
                     }
                 }
@@ -313,10 +314,11 @@ l = ["a"-"z"]`,
                         });
                         y[func.name] = func.def;
                     });
+                    console.log(y);
                     while (i <= this.interval[1]) {
-                        this.functions.forEach(func => {
+                        this.functions.forEach((func) => {
                             let s = series.find(ser => ser.name === func.name);
-                            y[func.name] = this[this.method](y, i, this.step, func.f, func.name);
+                            y[func.name] = this[this.method]({}, y, i, this.step, func.f, func.name);
                             s.data.push([i, +y[func.name].toFixed(2)]);
                         });
                         i += this.step;
