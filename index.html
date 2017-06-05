@@ -218,6 +218,12 @@ l = ["a"-"z"]`,
                     this.toString = function () {
                         return 'Not filled ' + text;
                     };
+				},
+				missValue: function(text){
+                    self.getCaretPos(text);
+                    this.toString = function () {
+                        return 'No value for ' + text;
+                    };
 				}
             }
         },
@@ -344,10 +350,19 @@ l = ["a"-"z"]`,
                 })
             },
             getStep(text){
+				if (!text)
+				{
+					throw new this.exceptions.missValue('step');
+				}
                 this.isNumber(text ? text[1] : NaN);
                 this.step = parseFloat(text[1]);
             },
             getInterval(text){
+			
+				if (!text)
+				{
+					throw new this.exceptions.missValue('interval');
+				}
                 this.isNumber(text[1]);
                 this.isNumber(text[2]);
                 this.interval = [parseFloat(text[1]), parseFloat(text[2])];
